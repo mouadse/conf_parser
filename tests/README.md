@@ -23,7 +23,6 @@ make test TEST_FILTER=cgi
 | `valid_defaults.conf` | Exercises default host/index/body-size inheritance plus per-location overrides. |
 | `valid_cgi_extended.conf` | CGI-heavy server that verifies path/extension pairing, redirects, and small-body limits. |
 | `valid_alias_and_return.conf` | Alias/return pairing, wildcard CGI mapping, and alternate `methods` directive usage. |
-| `virtual_hosts.conf` | Two virtual hosts share the same port but differ by `server_name` and root. |
 | `tiny_body.conf` | Tiny `client_max_body_size` (10 bytes) with a POST-only `/upload` location. |
 | `wrong_method.conf` | Uses the `allowed_methods` alias to permit only GET on the root location. |
 
@@ -56,6 +55,7 @@ make test TEST_FILTER=cgi
 | `invalid_cgi_bad_extension.conf` | Unsupported CGI extension (`.php`) should fail validation. |
 | `invalid_location_missing_index.conf` | Location inherits a missing index file from a real directory, tripping index validation. |
 | `invalid_duplicate_server_defaults.conf` | Two servers collide on defaults (host/server_name) without explicit duplication. |
+| `virtual_hosts.conf` | Duplicate `listen`/`host` pair even with different `server_name` values should be rejected. |
 | `duplicate_ports.conf` | Mirrors the checklist duplicate port case to ensure collisions are rejected. |
 | `stress_empty.conf` | Empty configuration file should be rejected cleanly. |
 | `stress_missing_brace.conf` | Missing a closing brace must break scope detection. |

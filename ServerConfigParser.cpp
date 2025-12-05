@@ -283,8 +283,7 @@ void ServerConfigParser::checkServers(void) {
   for (size_t i = 0; i < _servers.size(); ++i) {
     for (size_t j = i + 1; j < _servers.size(); ++j) {
       if (_servers[i].getPort() == _servers[j].getPort() &&
-          _servers[i].getHost() == _servers[j].getHost() &&
-          _servers[i].getServerName() == _servers[j].getServerName())
+          _servers[i].getHost() == _servers[j].getHost())
         throw std::runtime_error("Failed server validation");
     }
   }
