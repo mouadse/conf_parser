@@ -194,7 +194,8 @@ void WebserverConfig::setLocationBlocks(
       else
         new_location.setRoot(joinPaths(_root, value));
     } else if ((parameters[i] == "allow_methods" ||
-                parameters[i] == "methods") &&
+                parameters[i] == "methods" ||
+                parameters[i] == "allowed_methods") &&
                (i + 1) < parameters.size()) {
       if (has_methods)
         throw std::runtime_error("Allow_methods of location is duplicated");

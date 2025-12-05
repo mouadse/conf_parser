@@ -505,6 +505,94 @@ static bool verifyValidAliasAndReturn(const ServerConfigParser &parser,
   return (true);
 }
 
+static bool verifyVirtualHostsTodo(const ServerConfigParser &parser,
+                                   std::string &message) {
+  std::vector<WebserverConfig> servers = parser.getServers();
+  if (servers.size() != 2) {
+    message = "Expected two virtual hosts";
+    return (false);
+  }
+  const WebserverConfig &first = servers[0];
+  const WebserverConfig &second = servers[1];
+  if (first.getPort() != 8081 || second.getPort() != 8081) {
+    message = "virtual hosts should share port 8081";
+    return (false);
+  }
+  if (first.getHost() != inet_addr("127.0.0.1") ||
+      second.getHost() != inet_addr("127.0.0.1")) {
+    message = "virtual hosts should default to localhost";
+    return (false);
+  }
+  if (first.getServerName() != "google.com" ||
+      second.getServerName() != "42.fr") {
+    message = "virtual host names mismatched";
+    return (false);
+  }
+  if (first.getRoot() != "./www/google_spoof" ||
+      second.getRoot() != "./www/42_spoof") {
+    message = "virtual host roots mismatched";
+    return (false);
+  }
+  if (first.getIndex() != "index.html" ||
+      second.getIndex() != "index.html") {
+    message = "virtual host index mismatch";
+    return (false);
+  }
+  return (true);
+}
+
+static bool verifyTinyBodyLimit(const ServerConfigParser &parser,
+                                std::string &message) {
+  std::vector<WebserverConfig> servers = parser.getServers();
+  if (servers.size() != 1) {
+    message = "Expected one tiny-body server";
+    return (false);
+  }
+  const WebserverConfig &server = servers[0];
+  if (server.getPort() != 8082) {
+    message = "listen directive mismatch for tiny body config";
+    return (false);
+  }
+  if (server.getMaxBodySize() != 10) {
+    message = "client_max_body_size 10 was not applied";
+    return (false);
+  }
+  const LocationBlock *upload = findLocation(server, "/upload");
+  if (!upload) {
+    message = "Missing /upload location";
+    return (false);
+  }
+  if (!checkAllowedMethods(*upload, false, true, false, false, false, message))
+    return (false);
+  if (upload->getMaxBodySize() != server.getMaxBodySize()) {
+    message = "/upload did not inherit server max body size";
+    return (false);
+  }
+  return (true);
+}
+
+static bool verifyMethodRestrictionTodo(const ServerConfigParser &parser,
+                                        std::string &message) {
+  std::vector<WebserverConfig> servers = parser.getServers();
+  if (servers.size() != 1) {
+    message = "Expected one restricted-method server";
+    return (false);
+  }
+  const WebserverConfig &server = servers[0];
+  if (server.getPort() != 8083) {
+    message = "listen directive mismatch for method restriction config";
+    return (false);
+  }
+  const LocationBlock *root = findLocation(server, "/");
+  if (!root) {
+    message = "Missing / location for method restriction config";
+    return (false);
+  }
+  if (!checkAllowedMethods(*root, true, false, false, false, false, message))
+    return (false);
+  return (true);
+}
+
 static bool containsSubstring(const std::string &value,
                               const std::string &needle) {
   if (needle.empty())
@@ -584,14 +672,22 @@ int main(int argc, char **argv) {
       {"valid_alias_and_return",
        "tests/configs/valid_alias_and_return.conf", true, "",
        &verifyValidAliasAndReturn},
+      {"todo_virtual_hosts", "tests/configs/virtual_hosts.conf", true, "",
+       &verifyVirtualHostsTodo},
+      {"todo_tiny_body_limit", "tests/configs/tiny_body.conf", true, "",
+       &verifyTinyBodyLimit},
+      {"todo_allowed_methods_alias", "tests/configs/wrong_method.conf", true,
+       "", &verifyMethodRestrictionTodo},
       {"invalid_missing_semicolon",
        "tests/configs/invalid_missing_semicolon.conf", false,
        "missing semicolon", NULL},
       {"invalid_duplicate_directives",
        "tests/configs/invalid_duplicate_directives.conf", false,
-       "Client_max_body_size is duplicated", NULL},
+      "Client_max_body_size is duplicated", NULL},
       {"invalid_duplicate_server_blocks",
        "tests/configs/invalid_duplicate_server_blocks.conf", false,
+       "Failed server validation", NULL},
+      {"todo_duplicate_ports", "tests/configs/duplicate_ports.conf", false,
        "Failed server validation", NULL},
       {"invalid_cgi_block", "tests/configs/invalid_cgi_block.conf", false,
        "Failed CGI validation", NULL},
@@ -654,6 +750,15 @@ int main(int argc, char **argv) {
       {"invalid_duplicate_server_defaults",
        "tests/configs/invalid_duplicate_server_defaults.conf", false,
        "Failed server validation", NULL},
+      {"todo_stress_empty", "tests/configs/stress_empty.conf", false,
+       "File is empty", NULL},
+      {"todo_stress_missing_brace",
+       "tests/configs/stress_missing_brace.conf", false, "scope", NULL},
+      {"todo_stress_port_overflow",
+       "tests/configs/stress_port_overflow.conf", false,
+       "Wrong syntax: port", NULL},
+      {"todo_error_cycles", "tests/configs/error_cycles.conf", false,
+       "Incorrect path for error page file", NULL},
   };
 
   const size_t total_tests = sizeof(test_cases) / sizeof(TestCase);
